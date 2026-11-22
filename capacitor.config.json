@@ -1,0 +1,6 @@
+{
+  "appId": "com.patpet.shibacare",
+  "appName": "Pat Pet 護理手帳 v1.3.0",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

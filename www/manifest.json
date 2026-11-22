@@ -1,0 +1,17 @@
+{
+  "name": "Pat Pet 護理手帳 v1.3.0",
+  "short_name": "Pat Pet v1.3.0",
+  "description": "柴犬 Pat Pet 滴頸、杜蟲藥、美容、打針日期記錄、一頁總表、Excel 匯入匯出、GitHub Gist 私人雲端同步與每日倒數提醒",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FDF7F0",
+  "theme_color": "#D97736",
+  "icons": [
+    {
+      "src": "./icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

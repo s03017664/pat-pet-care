@@ -37,29 +37,24 @@ if (mode === 'post') {
   gradle = gradle.replace(/versionName\s+"[^"]+"/, `versionName "${version}"`);
 
   const hasKeystore = Boolean(process.env.HAS_RELEASE_KEYSTORE === 'true');
-  if (hasKeystore) {
-    const signingBlock = [
-      '    signingConfigs {',
-      '        release {',
-      '            storeFile file("release-key.jks")',
-      '            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")',
-      '            keyAlias System.getenv("ANDROID_KEY_ALIAS")',
-      '            keyPassword System.getenv("ANDROID_KEY_PASSWORD")',
-      '        }',
-      '    }',
-      '    buildTypes {'
-    ].join('\n');
-
-    if (!gradle.includes('signingConfigs {')) {
-      gradle = gradle.replace('buildTypes {', signingBlock);
-    }
+  if (hasKeystore && !gradle.includes('signingConfigs {')) {
     gradle = gradle.replace(
-      /release\s*\{/,
-      'release {\n            signingConfig signingConfigs.release'
+      /buildTypes\s*\{\s*release\s*\{/,
+      [
+        'signingConfigs {',
+        '        release {',
+        '            storeFile file("release-key.jks")',
+        '            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")',
+        '            keyAlias System.getenv("ANDROID_KEY_ALIAS")',
+        '            keyPassword System.getenv("ANDROID_KEY_PASSWORD")',
+        '        }',
+        '    }',
+        '    buildTypes {',
+        '        release {',
+        '            signingConfig signingConfigs.release'
+      ].join('\n')
     );
     console.log('[post] Configured fixed Release Keystore signing (overwrite-update enabled!)');
-  } else {
-    console.log('[post] No ANDROID_KEYSTORE_BASE64 secret detected; will build Debug APK.');
   }
 
   fs.writeFileSync(gradlePath, gradle);

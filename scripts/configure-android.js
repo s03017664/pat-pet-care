@@ -8,13 +8,11 @@ const versionCode = 100 + (isNaN(runNumber) ? 1 : runNumber);
 const mode = process.argv[2] || 'pre';
 
 if (mode === 'pre') {
-  // 1. Sync appName in capacitor.config.json (keep appId constant for overwrite upgrades!)
   const capPath = 'capacitor.config.json';
   const cap = JSON.parse(fs.readFileSync(capPath, 'utf8'));
   cap.appName = `Pat Pet 護理手帳 v${version}`;
   fs.writeFileSync(capPath, JSON.stringify(cap, null, 2));
 
-  // 2. Sync version in www/index.html & manifest.json
   const htmlPath = path.join('www', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
   html = html.replace(/const APP_VERSION = '[^']+';/, `const APP_VERSION = '${version}';`);
@@ -32,7 +30,6 @@ if (mode === 'pre') {
 }
 
 if (mode === 'post') {
-  // Patch android/app/build.gradle for versionCode, versionName, and release signing
   const gradlePath = path.join('android', 'app', 'build.gradle');
   let gradle = fs.readFileSync(gradlePath, 'utf8');
 
@@ -41,24 +38,24 @@ if (mode === 'post') {
 
   const hasKeystore = Boolean(process.env.HAS_RELEASE_KEYSTORE === 'true');
   if (hasKeystore) {
-    const signingBlock = `
-    signingConfigs {
-        release {
-            storeFile file("release-key.jks")
-            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            keyAlias System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword System.getenv("ANDROID_KEY_PASSWORD")
-        }
-    }
-    buildTypes {`;
+    const signingBlock = [
+      '    signingConfigs {',
+      '        release {',
+      '            storeFile file("release-key.jks")',
+      '            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")',
+      '            keyAlias System.getenv("ANDROID_KEY_ALIAS")',
+      '            keyPassword System.getenv("ANDROID_KEY_PASSWORD")',
+      '        }',
+      '    }',
+      '    buildTypes {'
+    ].join('\n');
 
     if (!gradle.includes('signingConfigs {')) {
       gradle = gradle.replace('buildTypes {', signingBlock);
     }
     gradle = gradle.replace(
       /release\s*\{/,
-      'release {
-            signingConfig signingConfigs.release'
+      'release {\n            signingConfig signingConfigs.release'
     );
     console.log('[post] Configured fixed Release Keystore signing (overwrite-update enabled!)');
   } else {

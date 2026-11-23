@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.json" />
-  <link rel="icon" href="./icon.jpg" />
-  <title>Pat Pet 護理手帳 v1.3.0 · Shiba Care</title>
+  <link rel="icon" href="./icon.png" />
+  <title>Pat Pet 護理手帳 v1.4.1 · Shiba Care</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -196,6 +196,46 @@
       font-size: 0.85rem;
       color: var(--text-muted);
       font-weight: 600;
+    }
+
+    .hero-bday-strip {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .age-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .bday-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #FFF0F3;
+      color: #C24163;
+      border: 1px solid #F5C2CF;
+    }
+
+    .bday-pill.is-today {
+      background: #D97736;
+      color: #FFFFFF;
+      border-color: #BA5D20;
     }
 
     .hero-speech {
@@ -1381,11 +1421,12 @@
         </div>
         <div class="hero-info">
           <div class="hero-title-row">
-            <h1 class="hero-title" id="heroDogName">Pat Pet 護理手帳 <span id="appVersionBadge" style="font-size:0.74rem; font-weight:800; color:var(--shiba-dark); background:rgba(255,255,255,0.85); border:1px solid rgba(217,119,54,0.28); padding:2px 8px; border-radius:999px; vertical-align:middle; margin-left:4px;">v1.3.0</span></h1>
+            <h1 class="hero-title" id="heroDogName">Pat Pet 護理手帳 <span id="appVersionBadge" style="font-size:0.74rem; font-weight:800; color:var(--shiba-dark); background:rgba(255,255,255,0.85); border:1px solid rgba(217,119,54,0.28); padding:2px 8px; border-radius:999px; vertical-align:middle; margin-left:4px;">v1.4.0</span></h1>
             <span class="hero-badge" id="heroDogMeta">柴犬 · 健康守護</span>
             <button type="button" class="sync-pill" id="heroSyncPill" title="前往 GitHub Gist 雲端同步設定">☁️ 未連線同步</button>
           </div>
           <p class="hero-date" id="todayDateLabel">今日日期載入中...</p>
+          <div class="hero-bday-strip" id="heroBdayStrip"></div>
         </div>
       </div>
 
@@ -1472,6 +1513,7 @@
     <section id="view-profile" class="view-panel">
       <div class="panel-card">
         <h3>🐕 Pat Pet 柴犬檔案</h3>
+        <div class="hero-bday-strip" id="profileBdayStrip" style="margin-top:0; margin-bottom:12px;"></div>
         <div class="form-grid">
           <div class="field">
             <label for="profName">狗狗名字</label>
@@ -1644,7 +1686,7 @@
           </div>
         </div>
       </div>
-      <div style="text-align:center; font-size:0.78rem; color:var(--text-light); font-weight:700; padding:4px 0 8px;">Pat Pet 護理手帳 · 版本 v<span id="settingsVersionText">1.3.0</span>（支援固定簽章覆蓋升級）</div>
+      <div style="text-align:center; font-size:0.78rem; color:var(--text-light); font-weight:700; padding:4px 0 8px;">Pat Pet 護理手帳 · 版本 v<span id="settingsVersionText">1.4.0</span>（支援固定簽章覆蓋升級）</div>
     </section>
   </div>
 
@@ -1799,7 +1841,7 @@
     (function () {
       'use strict';
 
-      const APP_VERSION = '1.3.0';
+      const APP_VERSION = '1.4.1';
       const STORAGE_KEY = 'shiba_care_tracker_v1';
       const GIST_CFG_KEY = 'shiba_care_gist_cfg_v1';
       const GIST_FILENAME = 'pat-pet-shiba-care-sync.json';
@@ -1868,7 +1910,7 @@
         return {
           profile: {
             name: 'Pat Pet',
-            birthday: '',
+            birthday: '2025-12-28',
             chip: '',
             color: '柴犬',
             vetName: '',
@@ -1892,6 +1934,9 @@
           const mergedProfile = { ...def.profile, ...(parsed.profile || {}) };
           if (!mergedProfile.name || mergedProfile.name === '阿柴') {
             mergedProfile.name = 'Pat Pet';
+          }
+          if (!mergedProfile.birthday) {
+            mergedProfile.birthday = '2025-12-28';
           }
           return {
             profile: mergedProfile,
@@ -2130,19 +2175,58 @@
         openModal('confirmModal');
       }
 
-      function calcAgeText(birthdayIso) {
-        if (!birthdayIso) return '';
+      function calcAgeAndBirthday(birthdayIso) {
+        if (!birthdayIso) return null;
         const b = parseIsoDate(birthdayIso);
         const today = getTodayDate();
-        if (b > today) return '';
-        let months = (today.getFullYear() - b.getFullYear()) * 12 + (today.getMonth() - b.getMonth());
-        if (today.getDate() < b.getDate()) months -= 1;
-        if (months < 1) return '未滿1個月';
-        const yrs = Math.floor(months / 12);
-        const rem = months % 12;
-        if (yrs === 0) return `${rem}個月大`;
-        if (rem === 0) return `${yrs}歲`;
-        return `${yrs}歲${rem}個月`;
+        if (b > today) return null;
+
+        let years = today.getFullYear() - b.getFullYear();
+        let months = today.getMonth() - b.getMonth();
+        let days = today.getDate() - b.getDate();
+
+        if (days < 0) {
+          months -= 1;
+          const prevMonthDays = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+          days += prevMonthDays;
+        }
+        if (months < 0) {
+          years -= 1;
+          months += 12;
+        }
+
+        let ageText = '';
+        if (years === 0 && months === 0) {
+          ageText = `${days}日大`;
+        } else if (years === 0) {
+          ageText = days > 0 ? `${months}個月 ${days}日大` : `${months}個月大`;
+        } else {
+          ageText = `${years}歲 ${months}個月 ${days}日大`;
+        }
+
+        // Next birthday calculation (handles Feb 29 cleanly)
+        const makeBday = (yr) => {
+          const maxDay = new Date(yr, b.getMonth() + 1, 0).getDate();
+          return new Date(yr, b.getMonth(), Math.min(b.getDate(), maxDay), 0, 0, 0, 0);
+        };
+        let nextBday = makeBday(today.getFullYear());
+        if (nextBday < today) {
+          nextBday = makeBday(today.getFullYear() + 1);
+        }
+        const bdayDaysLeft = diffDays(today, nextBday);
+        const nextAge = nextBday.getFullYear() - b.getFullYear();
+        const isBirthdayToday = bdayDaysLeft === 0;
+
+        return {
+          years,
+          months,
+          days,
+          ageText,
+          bdayDaysLeft,
+          nextAge,
+          isBirthdayToday,
+          nextBdayLabel: `${nextBday.getMonth() + 1}月${nextBday.getDate()}日`
+        };
       }
 
       function switchTab(tabName) {
@@ -2359,14 +2443,23 @@
         const dogName = (state.profile.name || 'Pat Pet').trim();
         document.getElementById('heroDogName').innerHTML = `${escapeHtml(dogName)} 護理手帳 <span id="appVersionBadge" style="font-size:0.74rem; font-weight:800; color:var(--shiba-dark); background:rgba(255,255,255,0.85); border:1px solid rgba(217,119,54,0.28); padding:2px 8px; border-radius:999px; vertical-align:middle; margin-left:4px;">v${APP_VERSION}</span>`;
 
-        const age = calcAgeText(state.profile.birthday);
+        const bInfo = calcAgeAndBirthday(state.profile.birthday);
         const latestWeight = state.weights.length > 0
           ? [...state.weights].sort((a, b) => b.date.localeCompare(a.date))[0].weight
           : null;
         const metaParts = [state.profile.color || '柴犬'];
-        if (age) metaParts.push(age);
         if (latestWeight) metaParts.push(`${latestWeight} kg`);
         document.getElementById('heroDogMeta').textContent = metaParts.join(' · ');
+
+        const bdayHtml = bInfo
+          ? `<span class="age-pill">🐾 ${bInfo.ageText}</span>` +
+            (bInfo.isBirthdayToday
+              ? `<span class="bday-pill is-today">🎂 今日係 ${bInfo.nextAge} 歲生日！Happy Birthday！🎉</span>`
+              : `<span class="bday-pill">🎂 距離 ${bInfo.nextAge} 歲生日仲有 ${bInfo.bdayDaysLeft} 日（${bInfo.nextBdayLabel}）</span>`)
+          : '';
+        document.getElementById('heroBdayStrip').innerHTML = bdayHtml;
+        const profStrip = document.getElementById('profileBdayStrip');
+        if (profStrip) profStrip.innerHTML = bdayHtml;
 
         document.getElementById('btnToggleDemo').textContent = state.isDemoMode ? '清除示範' : '載入示範';
 

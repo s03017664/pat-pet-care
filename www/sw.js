@@ -1,11 +1,9 @@
-const CACHE_NAME = 'pat-pet-care-v1.3.0';
+const CACHE_NAME = 'pat-pet-care-v1.4.0';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.jpg'];
-
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
-
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -14,12 +12,7 @@ self.addEventListener('activate', (event) => {
   );
   self.clients.claim();
 });
-
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.startsWith('https://api.github.com/')) {
-    return;
-  }
-  event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
-  );
+  if (event.request.url.startsWith('https://api.github.com/')) return;
+  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-const version = pkg.version || '1.3.0';
+const version = pkg.version || '1.4.1';
 const runNumber = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 const versionCode = 100 + (isNaN(runNumber) ? 1 : runNumber);
 const mode = process.argv[2] || 'pre';
@@ -30,6 +30,35 @@ if (mode === 'pre') {
 }
 
 if (mode === 'post') {
+  // 1. Copy Cute Red Shiba Inu Android launcher icons
+  const iconsSrc = 'android-icons';
+  const resDir = path.join('android', 'app', 'src', 'main', 'res');
+  if (fs.existsSync(iconsSrc)) {
+    for (const folder of fs.readdirSync(iconsSrc)) {
+      const srcDir = path.join(iconsSrc, folder);
+      const dstDir = path.join(resDir, folder);
+      if (fs.statSync(srcDir).isDirectory()) {
+        fs.mkdirSync(dstDir, { recursive: true });
+        for (const file of fs.readdirSync(srcDir)) {
+          fs.copyFileSync(path.join(srcDir, file), path.join(dstDir, file));
+        }
+      }
+    }
+    // Set warm Shiba cream background for Android Adaptive Icon
+    const bgColorXml = `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#F8E7CB</color>\n</resources>\n`;
+    const valuesDir = path.join(resDir, 'values');
+    fs.mkdirSync(valuesDir, { recursive: true });
+    fs.writeFileSync(path.join(valuesDir, 'ic_launcher_background.xml'), bgColorXml);
+
+    const anydpiDir = path.join(resDir, 'mipmap-anydpi-v26');
+    const adaptiveXml = `<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n    <background android:drawable="@color/ic_launcher_background"/>\n    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n</adaptive-icon>\n`;
+    fs.mkdirSync(anydpiDir, { recursive: true });
+    fs.writeFileSync(path.join(anydpiDir, 'ic_launcher.xml'), adaptiveXml);
+    fs.writeFileSync(path.join(anydpiDir, 'ic_launcher_round.xml'), adaptiveXml);
+    console.log('[post] Installed Cute Red Shiba Inu Android launcher icons!');
+  }
+
+  // 2. Patch android/app/build.gradle for versionCode, versionName & release signing
   const gradlePath = path.join('android', 'app', 'build.gradle');
   let gradle = fs.readFileSync(gradlePath, 'utf8');
 

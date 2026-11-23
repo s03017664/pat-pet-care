@@ -1,6 +1,6 @@
 {
   "name": "pat-pet-care-app",
-  "version": "1.3.0",
+  "version": "1.4.1",
   "description": "柴犬 Pat Pet 護理手帳 Android APK 專案（固定簽章覆蓋升級 + GitHub Gist 私人同步）",
   "private": true,
   "dependencies": {
